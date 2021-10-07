@@ -1,0 +1,4 @@
+{
+  "db": "mongodb://localhost:27017/memphy-test",
+  "port": "3000"
+}

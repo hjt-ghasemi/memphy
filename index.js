@@ -1,13 +1,13 @@
 const express = require("express");
-
+const config = require("config");
 const app = express();
 
-require("./startup/essentials")(app);
+require("./startup/setting")(app);
 
 app.get("/", (req, res) => {
   res.render("home");
 });
 
-app.listen(3000, () => {
-  console.log("listen to port 3000");
+app.listen(config.get("port"), () => {
+  console.log(`listen to port ${config.get("port")}`);
 });
