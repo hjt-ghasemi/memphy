@@ -1,18 +1,22 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
 
-const League = mongoose.model(
-  "League",
-  new mongoose.Schema({
-    title: {
-      type: String,
-      required: true,
-      unique: true,
-      maxLength: 50,
-      minLength: 5,
-    },
-  })
-);
+const leagueSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    unique: true,
+    maxLength: 50,
+    minLength: 5,
+  },
+});
+
+leagueSchema.statics.isAvaiable = async function (id) {
+  const league = await League.findById(id);
+  return Boolean(league);
+};
+
+const League = mongoose.model("League", leagueSchema);
 
 function leagueValidator(req) {
   const schema = Joi.object({
