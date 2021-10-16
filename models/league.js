@@ -21,10 +21,10 @@ const League = mongoose.model("League", leagueSchema);
 function leagueValidator(req) {
   const schema = Joi.object({
     title: Joi.string()
+      .pattern(new RegExp('^[a-zA-Z0-9]{5,50}$'))
       .required()
       .min(5)
       .max(50)
-      .pattern(new RegExp("[a-zA-Z0-9]")),
   });
 
   const result = schema.validate(req);

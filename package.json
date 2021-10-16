@@ -4,7 +4,7 @@
   "description": "an web service for football teams and players database",
   "main": "index.js",
   "scripts": {
-    "test": "jest --verbose"
+    "test": "jest --verbose  --maxWorkers=1"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "express": "^4.17.1",
     "helmet": "^4.6.0",
     "joi": "^17.4.2",
+    "joi-objectid": "^4.0.2",
     "mongoose": "^6.0.9",
     "supertest": "^6.1.6"
   },

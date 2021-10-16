@@ -44,22 +44,6 @@ describe("/api/leagues", () => {
 
       expect(result).not.toBeNull();
     });
-
-    it("should return 400 status if title is less than 5 characters", async () => {
-      const league = { title: "1234" };
-      const res = await request(server).post("/api/leagues").send(league);
-
-      expect(res.status).toBe(400);
-    });
-
-    it("should return 400 if league title already exists", async () => {
-      const res = await request(server)
-        .post("/api/leagues")
-        .send({ title: "league1" });
-
-      expect(res.status).toBe(400);
-      expect(res.text).toContain("already");
-    });
   });
 
   describe("DELETE /:id", () => {
@@ -97,22 +81,6 @@ describe("/api/leagues", () => {
     it("should return 400 if given id is invalid", async () => {
       leagueId = "invalidId";
       const res = await request(server).put("/api/leagues/" + leagueId);
-
-      expect(res.status).toBe(400);
-    });
-
-    it("should return 400 if title is less than 5 characters", async () => {
-      const res = await request(server)
-        .put("/api/leagues/" + leagueId)
-        .send({ title: "1234" });
-
-      expect(res.status).toBe(400);
-    });
-
-    it("should return 400 if title is more than 50 characters", async () => {
-      const res = await request(server)
-        .put("/api/leagues/" + leagueId)
-        .send({ title: "a".padEnd(51, "a") });
 
       expect(res.status).toBe(400);
     });

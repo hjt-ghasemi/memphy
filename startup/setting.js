@@ -1,5 +1,7 @@
 const express = require("express");
 const indexRouter = require("../routes/indexRouther");
+const Joi = require("joi");
+Joi.objectId = require("joi-objectid")(Joi);
 
 module.exports = function (app) {
   app.set("views", "views");
