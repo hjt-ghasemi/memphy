@@ -4,7 +4,7 @@ const { Team } = require("../../../models/team");
 
 let server;
 
-describe("data validation on /api/coachs", () => {
+describe("data validation on /api/teams", () => {
   let teamId, team;
 
   beforeEach(() => {

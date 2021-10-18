@@ -7,21 +7,19 @@ const _ = require("lodash");
 const router = Router();
 
 router.get("/", async (req, res) => {
-  // TODO: after defining player model decomment below
   const teams = await Team.find()
     .populate("league")
-    .populate("coach", "name lname");
-  // .populate("players");;
+    .populate("coach", "name lname")
+    .populate("players");
 
   res.send(teams);
 });
 
 router.get("/:id", isValidId, async (req, res) => {
-  // TODO: after defining player model decomment below
   const team = await Team.findById(req.params.id)
     .populate("league")
-    .populate("coach", "name lname");
-  // .populate("players");
+    .populate("coach", "name lname")
+    .populate("players");
 
   if (!team) return res.status(404).send("no team found for the given id");
 

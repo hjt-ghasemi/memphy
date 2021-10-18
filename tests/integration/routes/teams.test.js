@@ -1,6 +1,7 @@
 const request = require("supertest");
 const { Team } = require("../../../models/team");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 describe("/api/teams", () => {
   let server, team, teamId;
@@ -30,7 +31,9 @@ describe("/api/teams", () => {
     it("should return all of teams in db", async () => {
       const res = await request(server).get("/api/teams");
 
-      expect(res.body[0]).toMatchObject(team);
+      expect(_.omit(res.body[0], ["league", "coach", "players"])).toMatchObject(
+        _.omit(team, ["league", "players", "coach"])
+      );
     });
   });
 
@@ -38,7 +41,9 @@ describe("/api/teams", () => {
     it("should return specific team by id", async () => {
       const res = await request(server).get("/api/teams/" + teamId);
 
-      expect(res.body).toMatchObject(team);
+      expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
+        _.omit(team, ["league", "players", "coach"])
+      );
     });
 
     it("should return 404 if team not found", async () => {
@@ -76,7 +81,9 @@ describe("/api/teams", () => {
 
       const res = await request(server).post("/api/teams").send(team);
 
-      expect(res.body).toMatchObject(team);
+      expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
+        _.omit(team, ["league", "players", "coach"])
+      );
     });
 
     it("should save the team in database", async () => {
@@ -130,11 +137,13 @@ describe("/api/teams", () => {
       delete team._id;
       team.title = "new team title";
 
-      const res = await request(server)
+      await request(server)
         .put("/api/teams/" + teamId)
         .send(team);
 
-      expect(res.body.title).toBe("new team title");
+      const teamInDb = await Team.findById(teamId);
+
+      expect(teamInDb.title).toBe(team.title);
     });
   });
 
@@ -160,7 +169,9 @@ describe("/api/teams", () => {
     it("should return deleted team in response", async () => {
       const res = await request(server).delete("/api/teams/" + teamId);
 
-      expect(res.body).toMatchObject(team);
+      expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
+        _.omit(team, ["league", "players", "coach"])
+      );
     });
 
     it("should delete the team from data base", async () => {

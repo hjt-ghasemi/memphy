@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const { Coach, coachValidator } = require("../models/coach");
+const _ = require("lodash");
 const validate = require("../middlewares/validation");
 const isValidId = require("../middlewares/validateObjectId");
 
@@ -31,12 +32,7 @@ router.put("/:id", [isValidId, validate(coachValidator)], async (req, res) => {
 
   if (!coach) return res.status(404).send("coach with given id not found");
 
-  req.body.name && (coach.name = req.body.name);
-  req.body.lname && (coach.lname = req.body.lname);
-  req.body.age && (coach.age = req.body.age);
-  req.body.avatar && (coach.avatar = req.body.avatar);
-  req.body.team && (coach.team = req.body.team);
-
+  _.assign(coach, req.body);
   await coach.save();
 
   res.send(coach);
