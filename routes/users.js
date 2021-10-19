@@ -27,10 +27,8 @@ router.post("/", validate(userValidator), async (req, res) => {
   if (await User.alreadyExists(req.body))
     return res.status(400).send("this email or username already is taken");
 
-  req.body.password = await bcrypt.hash(req.body.password, 10);
-
   const user = User(req.body);
-  user.save();
+  await user.save();
 
   const token = user.generateJWT();
 
@@ -45,8 +43,6 @@ router.put("/:id", [isValidId, validate(userValidator)], async (req, res) => {
   if (!user) return res.status(404).send("not found any user for the given id");
 
   _.assign(user, req.body);
-
-  user.password = await bcrypt.hash(req.body.password, 10);
 
   await user.save();
 

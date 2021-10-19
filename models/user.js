@@ -3,6 +3,7 @@ const Joi = require("joi");
 const config = require("config");
 const { JoiPassword } = require("joi-password");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -27,6 +28,10 @@ const userSchema = new mongoose.Schema({
     enum: ["A", "B", "C"],
     default: "C",
   },
+});
+
+userSchema.pre("save", async function () {
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.statics.alreadyExists = function (body) {
