@@ -5,11 +5,11 @@ const { Team } = require("../../../models/team");
 let server;
 
 describe("data validation on /api/teams", () => {
-  let teamId, team;
+  let team;
 
   beforeEach(() => {
     server = require("../../../index");
-    teamId = mongoose.Types.ObjectId();
+
     team = {
       title: "teamTitle",
       league: mongoose.Types.ObjectId(),

@@ -163,7 +163,7 @@ describe("/api/players", () => {
       playerId = mongoose.Types.ObjectId();
 
       const res = await request(server).delete("/api/players/" + playerId);
-      console.log(res.text);
+
       expect(res.status).toBe(404);
       expect(res.text).toContain("not found");
     });

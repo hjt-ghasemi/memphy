@@ -9,9 +9,8 @@ describe("data validation on /api/players", () => {
 
   beforeEach(() => {
     server = require("../../../index");
-    playerId = mongoose.Types.ObjectId();
+
     player = {
-      _id: playerId,
       name: "playerName",
       lname: "playerLname",
       country: "country",

@@ -1,4 +1,5 @@
 {
   "db": "MEMPHY_DB",
-  "port": "MEMPHY_PORT"
+  "port": "MEMPHY_PORT",
+  "jwtPrivateKey": "MEMPHY_JWT"
 }
