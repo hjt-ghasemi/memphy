@@ -231,4 +231,10 @@ describe("/api/users", () => {
       expect(userInDb).toBeNull();
     });
   });
+
+  // describe("GET /me", ()=>{
+  //   it("should return current user information if token is provided", async()=>{
+
+  //   })
+  // })
 });

@@ -2,20 +2,22 @@ const { Router } = require("express");
 const { User, userValidator } = require("../models/user");
 const validate = require("../middlewares/validation");
 const isValidId = require("../middlewares/validateObjectId");
-const bcrypt = require("bcrypt");
+const permission = require("../middlewares/permission");
 const _ = require("lodash");
-const jwt = require("jsonwebtoken");
-const config = require("config");
 
 const router = Router();
 
-router.get("/", async (req, res) => {
+router.get("/", permission("A"), async (req, res) => {
   const users = await User.find().select("-password");
 
   res.send(users);
 });
 
-router.get("/:id", isValidId, async (req, res) => {
+router.get("/me", permission("C"), async (req, res) => {
+  res.send(req.user);
+});
+
+router.get("/:id", [permission("B"), isValidId], async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
 
   if (!user) return res.status(404).send("not found user for the given id");
@@ -37,20 +39,25 @@ router.post("/", validate(userValidator), async (req, res) => {
     .send(_.pick(user, ["_id", "email", "username"]));
 });
 
-router.put("/:id", [isValidId, validate(userValidator)], async (req, res) => {
-  const user = await User.findById(req.params.id);
+router.put(
+  "/:id",
+  [permission("A"), isValidId, validate(userValidator)],
+  async (req, res) => {
+    const user = await User.findById(req.params.id);
 
-  if (!user) return res.status(404).send("not found any user for the given id");
+    if (!user)
+      return res.status(404).send("not found any user for the given id");
 
-  _.assign(user, req.body);
+    _.assign(user, req.body);
 
-  await user.save();
+    await user.save();
 
-  user.password = undefined;
-  res.send(user);
-});
+    user.password = undefined;
+    res.send(user);
+  }
+);
 
-router.delete("/:id", isValidId, async (req, res) => {
+router.delete("/:id", [permission("A"), isValidId], async (req, res) => {
   const user = await User.findByIdAndDelete(req.params.id);
   if (!user) return res.status(404).send("not found any user for the given id");
 

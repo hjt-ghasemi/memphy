@@ -1,9 +1,20 @@
 const mongoose = require("mongoose");
 const request = require("supertest");
-
-let server;
+const { User } = require("../../../models/user");
 
 describe("data validation on /api/coachs", () => {
+  let server, token;
+
+  const tokenA = new User({
+    type: "A",
+  }).generateJWT();
+
+  const tokenB = new User({
+    type: "B",
+  }).generateJWT();
+
+  const tokenC = new User({ type: "C" }).generateJWT();
+
   let coach;
   beforeEach(() => {
     server = require("../../../index");
@@ -20,7 +31,10 @@ describe("data validation on /api/coachs", () => {
   });
 
   function exec() {
-    return request(server).post("/api/coachs").send(coach);
+    return request(server)
+      .post("/api/coachs")
+      .set("x-auth-token", token)
+      .send(coach);
   }
 
   it("should return 400 status if name is not set", async () => {

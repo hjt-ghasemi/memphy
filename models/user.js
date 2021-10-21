@@ -48,7 +48,7 @@ userSchema.statics.extractByToken = async function (token) {
 
     return user;
   } catch (ex) {
-    return ex;
+    return false;
   }
 };
 userSchema.methods.generateJWT = function () {

@@ -2,26 +2,31 @@ const { Router } = require("express");
 const { leagueValidator, League } = require("../models/league");
 const validate = require("../middlewares/validation");
 const isValidId = require("../middlewares/validateObjectId");
+const permission = require("../middlewares/permission");
 
 const router = Router();
 
-router.get("/", async (req, res) => {
+router.get("/", permission("B"), async (req, res) => {
   const leagues = await League.find({});
 
   res.send(leagues);
 });
 
-router.post("/", validate(leagueValidator), async (req, res) => {
-  if (await League.findOne({ title: req.body.title }))
-    return res.status(400).send("this league already exists");
+router.post(
+  "/",
+  [permission("B"), validate(leagueValidator)],
+  async (req, res) => {
+    if (await League.findOne({ title: req.body.title }))
+      return res.status(400).send("this league already exists");
 
-  const league = new League(req.body);
-  await league.save();
+    const league = new League(req.body);
+    await league.save();
 
-  res.send(league);
-});
+    res.send(league);
+  }
+);
 
-router.delete("/:id", isValidId, async (req, res) => {
+router.delete("/:id", [permission("B"), isValidId], async (req, res) => {
   const _id = req.params.id;
 
   if (!(await League.isAvaiable(_id)))
@@ -31,19 +36,23 @@ router.delete("/:id", isValidId, async (req, res) => {
   res.send(deletedLeague);
 });
 
-router.put("/:id", [isValidId, validate(leagueValidator)], async (req, res) => {
-  const _id = req.params.id;
+router.put(
+  "/:id",
+  [permission("B"), isValidId, validate(leagueValidator)],
+  async (req, res) => {
+    const _id = req.params.id;
 
-  if (!(await League.isAvaiable(_id)))
-    return res.status(404).send("league not found");
+    if (!(await League.isAvaiable(_id)))
+      return res.status(404).send("league not found");
 
-  const league = await League.findOneAndUpdate(
-    { _id },
-    { title: req.body.title },
-    { new: true }
-  );
+    const league = await League.findOneAndUpdate(
+      { _id },
+      { title: req.body.title },
+      { new: true }
+    );
 
-  res.send(league);
-});
+    res.send(league);
+  }
+);
 
 module.exports = router;
