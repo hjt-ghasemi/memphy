@@ -43,13 +43,14 @@ userSchema.statics.alreadyExists = function (body) {
 
 userSchema.statics.extractByToken = async function (token) {
   try {
-    const { _id } = await jwt.verify(token, config.get("jwtPrivateKey"));
-    const user = await this.findById(_id).select("-password");
-
-    return user;
+    const decoded = await jwt.verify(token, config.get("jwtPrivateKey"));
   } catch (ex) {
     return false;
   }
+
+  const user = await this.findById(decoded._id).select("-password");
+
+  return user;
 };
 userSchema.methods.generateJWT = function () {
   return jwt.sign({ _id: this._id }, config.get("jwtPrivateKey"));

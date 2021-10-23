@@ -1,8 +1,10 @@
 const express = require("express");
+require("express-async-errors");
 const indexRouter = require("../routes/indexRouther");
 const Joi = require("joi");
 Joi.objectId = require("joi-objectid")(Joi);
 const config = require("config");
+const errors = require("../middlewares/errors");
 
 if (!config.get("jwtPrivateKey")) {
   console.error("jwt private key is not provided");
@@ -17,4 +19,6 @@ module.exports = function (app) {
   app.use(express.static("/public"));
 
   app.use(indexRouter);
+
+  app.use(errors);
 };

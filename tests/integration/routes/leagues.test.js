@@ -60,6 +60,17 @@ describe("/api/leagues", () => {
 
       expect(result).not.toBeNull();
     });
+
+    it("should return 400 status if title is repetitive", async () => {
+      const newLeague = { title: league.title };
+      const res = await request(server)
+        .post("/api/leagues")
+        .set("x-auth-token", token)
+        .send(newLeague);
+
+      expect(res.status).toBe(400);
+      expect(res.text).toContain("already");
+    });
   });
 
   describe("DELETE /:id", () => {
