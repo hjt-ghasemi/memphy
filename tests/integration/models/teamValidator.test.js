@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 const request = require("supertest");
 const { Team } = require("../../../models/team");
-
-let server;
+const { User } = require("../../../models/user");
 
 describe("data validation on /api/teams", () => {
-  let team;
+  let server, team, token;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     server = require("../../../index");
 
     team = {
@@ -18,15 +17,28 @@ describe("data validation on /api/teams", () => {
       players: [mongoose.Types.ObjectId()],
       avatar: "http://www.avatar.avatar",
     };
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+
+    token = userB.generateJWT();
   });
 
   afterEach(async () => {
-    server.close();
     await Team.deleteMany();
+    await User.deleteMany();
+    server.close();
   });
 
   function exec() {
-    return request(server).post("/api/teams").send(team);
+    return request(server)
+      .post("/api/teams")
+      .set("x-auth-token", token)
+      .send(team);
   }
 
   it("should return 400 status if title is not set", async () => {

@@ -1,97 +1,135 @@
 const request = require("supertest");
 const { League } = require("../../../models/league");
+const { User } = require("../../../models/user");
 const mongoose = require("mongoose");
 
 describe("/api/leagues", () => {
-  let server;
-  let leagueId;
+  let server, league, leagueId, token;
+
   beforeEach(async () => {
-    leagueId = mongoose.Types.ObjectId();
     server = require("../../../index");
-    await League.insertMany([
-      { _id: leagueId, title: "league1" },
-      { title: "league2" },
-    ]);
+    leagueId = mongoose.Types.ObjectId();
+
+    league = await League.create({ _id: leagueId, title: "league1" });
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+
+    token = userB.generateJWT();
   });
 
   afterEach(async () => {
+    await League.deleteMany();
+    await User.deleteMany();
     await server.close();
-    await League.remove({});
   });
 
   describe("GET /", () => {
     it("should return array of leagues", async () => {
-      const res = await request(server).get("/api/leagues");
+      const res = await request(server)
+        .get("/api/leagues")
+        .set("x-auth-token", token);
 
-      expect(res.body[0].title).toBe("league1");
-      expect(res.body[1].title).toBe("league2");
+      expect(res.body[0]._id).toBe(league._id.toHexString());
     });
   });
 
   describe("POST /", () => {
-    it("should return saved league", async () => {
-      const league = { title: "newLeague" };
-      const res = await request(server).post("/api/leagues").send(league);
+    const newLeague = { title: "newLeagueTitle" };
 
-      expect(res.body.title).toBe("newLeague");
+    it("should return saved league", async () => {
+      const res = await request(server)
+        .post("/api/leagues")
+        .set("x-auth-token", token)
+        .send(newLeague);
+
+      expect(res.body).toMatchObject(newLeague);
     });
 
     it("should save league in db", async () => {
-      const league = { title: "newLeague" };
-      const res = await request(server).post("/api/leagues").send(league);
+      const res = await request(server)
+        .post("/api/leagues")
+        .set("x-auth-token", token)
+        .send(newLeague);
 
-      const result = await League.findOne({ title: "newLeague" });
+      const result = await League.findById(res.body._id);
 
       expect(result).not.toBeNull();
     });
   });
 
   describe("DELETE /:id", () => {
+    it("should return 404 if league not found", async () => {
+      const leagueId = mongoose.Types.ObjectId();
+      const res = await request(server)
+        .delete("/api/leagues/" + leagueId)
+        .set("x-auth-token", token);
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should return 400 if given id is invalid", async () => {
+      leagueId = "invalidId";
+      const res = await request(server)
+        .delete("/api/leagues/" + leagueId)
+        .set("x-auth-token", token);
+
+      expect(res.status).toBe(400);
+    });
+
     it("should return deleted league", async () => {
-      const res = await request(server).delete("/api/leagues/" + leagueId);
+      const res = await request(server)
+        .delete("/api/leagues/" + leagueId)
+        .set("x-auth-token", token);
 
       expect(res.body._id).toBe(leagueId.toHexString());
     });
 
-    it("should return 404 if league not found", async () => {
-      const leagueId = mongoose.Types.ObjectId();
-      const res = await request(server).delete("/api/leagues/" + leagueId);
+    it("should delete league from database", async () => {
+      const res = await request(server)
+        .delete("/api/leagues/" + leagueId)
+        .set("x-auth-token", token);
 
-      expect(res.status).toBe(404);
-    });
+      const leagueInDb = await League.findById(leagueId);
 
-    it("should return 400 if given id is invalid", async () => {
-      leagueId = "invalidId";
-      const res = await request(server).delete("/api/leagues/" + leagueId);
-
-      expect(res.status).toBe(400);
+      expect(leagueInDb).toBeNull();
     });
   });
 
   describe("PUT /:id", () => {
+    const updatedLeague = { title: "updatedTitle" };
+
     it("should return 404 if league not found", async () => {
       leagueId = mongoose.Types.ObjectId();
+
       const res = await request(server)
         .put("/api/leagues/" + leagueId)
-        .send({ title: "updatedLeague" });
+        .set("x-auth-token", token)
+        .send(updatedLeague);
 
       expect(res.status).toBe(404);
     });
 
     it("should return 400 if given id is invalid", async () => {
       leagueId = "invalidId";
-      const res = await request(server).put("/api/leagues/" + leagueId);
+      const res = await request(server)
+        .put("/api/leagues/" + leagueId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
     });
 
-    it("should return updated league with 200 status", async () => {
+    it("should return updated league", async () => {
       const res = await request(server)
         .put("/api/leagues/" + leagueId)
-        .send({ title: "updatedLeague" });
+        .set("x-auth-token", token)
+        .send(updatedLeague);
 
-      expect(res.status).toBe(200);
-      expect(res.body.title).toBe("updatedLeague");
+      expect(res.body.title).toBe("updatedTitle");
     });
   });
 });

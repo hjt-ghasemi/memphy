@@ -44,7 +44,7 @@ userSchema.statics.alreadyExists = function (body) {
 userSchema.statics.extractByToken = async function (token) {
   try {
     const { _id } = await jwt.verify(token, config.get("jwtPrivateKey"));
-    const user = await this.findById(_id);
+    const user = await this.findById(_id).select("-password");
 
     return user;
   } catch (ex) {

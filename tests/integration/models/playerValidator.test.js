@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 const request = require("supertest");
 const { Player } = require("../../../models/player");
-
-let server;
+const { User } = require("../../../models/user");
 
 describe("data validation on /api/players", () => {
-  let playerId, player;
+  let server, playerId, player, token;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     server = require("../../../index");
 
     player = {
@@ -22,15 +21,28 @@ describe("data validation on /api/players", () => {
       weight: 80,
       cost: 20000000,
     };
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+
+    token = userB.generateJWT();
   });
 
   afterEach(async () => {
-    server.close();
     await Player.deleteMany();
+    await User.deleteMany();
+    server.close();
   });
 
   function exec() {
-    return request(server).post("/api/players").send(player);
+    return request(server)
+      .post("/api/players")
+      .set("x-auth-token", token)
+      .send(player);
   }
 
   it("should return 400 status if name is not set", async () => {

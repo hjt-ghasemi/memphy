@@ -1,21 +1,33 @@
-const { League } = require('../../../models/league');
-const request = require('supertest');
-
+const { League } = require("../../../models/league");
+const request = require("supertest");
+const { User } = require("../../../models/user");
 
 describe("data validation on /api/leagues", () => {
-  let server, title;
+  let server, title, token;
 
-  beforeEach(() => {
-    server = require('../../../index');
+  beforeEach(async () => {
+    server = require("../../../index");
     title = "league1";
-  })
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
 
-  afterEach(()=> {
+    token = userB.generateJWT();
+  });
+
+  afterEach(async () => {
+    await User.deleteMany();
     server.close();
-  })
+  });
 
-  function exec(){
-    return request(server).post('/api/leagues').send({title});
+  function exec() {
+    return request(server)
+      .post("/api/leagues")
+      .set("x-auth-token", token)
+      .send({ title });
   }
 
   it("should return 400 status if title is not set", async () => {
@@ -43,10 +55,10 @@ describe("data validation on /api/leagues", () => {
   });
 
   it("should return 400 status if title does not match this pattern [a-zA-Z0-9]", async () => {
-    title = "?//league"
+    title = "?//league";
 
     const res = await exec();
-    
+
     expect(res.status).toBe(400);
   });
 });

@@ -2,21 +2,11 @@ const mongoose = require("mongoose");
 const request = require("supertest");
 const { User } = require("../../../models/user");
 
+let server;
+
 describe("data validation on /api/coachs", () => {
-  let server, token;
-
-  const tokenA = new User({
-    type: "A",
-  }).generateJWT();
-
-  const tokenB = new User({
-    type: "B",
-  }).generateJWT();
-
-  const tokenC = new User({ type: "C" }).generateJWT();
-
-  let coach;
-  beforeEach(() => {
+  let coach, token;
+  beforeEach(async () => {
     server = require("../../../index");
     coach = {
       name: "coachName",
@@ -25,8 +15,19 @@ describe("data validation on /api/coachs", () => {
       age: 50,
       avatar: "https://google.com",
     };
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+
+    token = userB.generateJWT();
   });
-  afterEach(() => {
+
+  afterEach(async () => {
+    await User.deleteMany();
     server.close();
   });
 

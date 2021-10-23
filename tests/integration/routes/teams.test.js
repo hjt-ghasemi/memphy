@@ -1,10 +1,11 @@
 const request = require("supertest");
 const { Team } = require("../../../models/team");
+const { User } = require("../../../models/user");
 const mongoose = require("mongoose");
 const _ = require("lodash");
 
 describe("/api/teams", () => {
-  let server, team, teamId;
+  let server, team, teamId, token;
 
   beforeEach(async () => {
     server = require("../../../index");
@@ -20,16 +21,27 @@ describe("/api/teams", () => {
     };
 
     await Team.create(team);
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+    token = userB.generateJWT();
   });
 
   afterEach(async () => {
     await Team.deleteMany();
+    await User.deleteMany();
     server.close();
   });
 
   describe("GET /", () => {
     it("should return all of teams in db", async () => {
-      const res = await request(server).get("/api/teams");
+      const res = await request(server)
+        .get("/api/teams")
+        .set("x-auth-token", token);
 
       expect(_.omit(res.body[0], ["league", "coach", "players"])).toMatchObject(
         _.omit(team, ["league", "players", "coach"])
@@ -39,7 +51,9 @@ describe("/api/teams", () => {
 
   describe("GET /:id", () => {
     it("should return specific team by id", async () => {
-      const res = await request(server).get("/api/teams/" + teamId);
+      const res = await request(server)
+        .get("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
         _.omit(team, ["league", "players", "coach"])
@@ -49,7 +63,9 @@ describe("/api/teams", () => {
     it("should return 404 if team not found", async () => {
       teamId = mongoose.Types.ObjectId();
 
-      const res = await request(server).get("/api/teams/" + teamId);
+      const res = await request(server)
+        .get("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
       expect(res.text).toContain("team");
@@ -58,7 +74,9 @@ describe("/api/teams", () => {
     it("should return 400 if given id is invalid", async () => {
       teamId = "invalid Id";
 
-      const res = await request(server).get("/api/teams/" + teamId);
+      const res = await request(server)
+        .get("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
       expect(res.text).toContain("invalid");
@@ -69,7 +87,10 @@ describe("/api/teams", () => {
     it("should return 400 status if the title already exists", async () => {
       delete team._id;
 
-      const res = await request(server).post("/api/teams").send(team);
+      const res = await request(server)
+        .post("/api/teams")
+        .set("x-auth-token", token)
+        .send(team);
 
       expect(res.status).toBe(400);
       expect(res.text).toContain("already");
@@ -79,7 +100,10 @@ describe("/api/teams", () => {
       delete team._id;
       team.title = "new team title";
 
-      const res = await request(server).post("/api/teams").send(team);
+      const res = await request(server)
+        .post("/api/teams")
+        .set("x-auth-token", token)
+        .send(team);
 
       expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
         _.omit(team, ["league", "players", "coach"])
@@ -90,7 +114,10 @@ describe("/api/teams", () => {
       delete team._id;
       team.title = "new team title";
 
-      const res = await request(server).post("/api/teams").send(team);
+      const res = await request(server)
+        .post("/api/teams")
+        .set("x-auth-token", token)
+        .send(team);
 
       const teamInDb = await Team.findById(res.body._id);
 
@@ -105,6 +132,7 @@ describe("/api/teams", () => {
 
       const res = await request(server)
         .put("/api/teams/" + teamId)
+        .set("x-auth-token", token)
         .send(team);
 
       expect(res.status).toBe(404);
@@ -117,6 +145,7 @@ describe("/api/teams", () => {
 
       const res = await request(server)
         .put("/api/teams/" + teamId)
+        .set("x-auth-token", token)
         .send(team);
 
       expect(res.status).toBe(400);
@@ -128,6 +157,7 @@ describe("/api/teams", () => {
 
       const res = await request(server)
         .put("/api/teams/" + teamId)
+        .set("x-auth-token", token)
         .send(team);
 
       expect(res.body.title).toBe("new team title");
@@ -139,6 +169,7 @@ describe("/api/teams", () => {
 
       await request(server)
         .put("/api/teams/" + teamId)
+        .set("x-auth-token", token)
         .send(team);
 
       const teamInDb = await Team.findById(teamId);
@@ -151,7 +182,9 @@ describe("/api/teams", () => {
     it("should return 400 status if given id is invalid", async () => {
       teamId = "invalid id";
 
-      const res = await request(server).delete("/api/teams/" + teamId);
+      const res = await request(server)
+        .delete("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
       expect(res.text).toContain("invalid");
@@ -160,14 +193,18 @@ describe("/api/teams", () => {
     it("should return 404 status if no team found", async () => {
       teamId = mongoose.Types.ObjectId();
 
-      const res = await request(server).delete("/api/teams/" + teamId);
+      const res = await request(server)
+        .delete("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
       expect(res.text).toContain("team");
     });
 
     it("should return deleted team in response", async () => {
-      const res = await request(server).delete("/api/teams/" + teamId);
+      const res = await request(server)
+        .delete("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       expect(_.omit(res.body, ["league", "coach", "players"])).toMatchObject(
         _.omit(team, ["league", "players", "coach"])
@@ -175,7 +212,9 @@ describe("/api/teams", () => {
     });
 
     it("should delete the team from data base", async () => {
-      const res = await request(server).delete("/api/teams/" + teamId);
+      const res = await request(server)
+        .delete("/api/teams/" + teamId)
+        .set("x-auth-token", token);
 
       const teamInDb = await Team.findById(teamId);
 

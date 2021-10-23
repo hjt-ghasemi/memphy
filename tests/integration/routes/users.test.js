@@ -5,7 +5,7 @@ const _ = require("lodash");
 const bcrypt = require("bcrypt");
 
 describe("/api/users", () => {
-  let server, user, userId;
+  let server, user, userId, token;
 
   beforeEach(async () => {
     server = require("../../../index");
@@ -18,6 +18,15 @@ describe("/api/users", () => {
     };
 
     await User.create(user);
+
+    userA = await User.create({
+      email: "userAemail@gmail.com",
+      username: "userA",
+      password: "ValidPassword1",
+      type: "A",
+    });
+
+    token = userA.generateJWT();
   });
 
   afterEach(async () => {
@@ -27,14 +36,18 @@ describe("/api/users", () => {
 
   describe("GET /", () => {
     it("should return all of users in db", async () => {
-      const res = await request(server).get("/api/users");
+      const res = await request(server)
+        .get("/api/users")
+        .set("x-auth-token", token);
 
       expect(res.body[0].email).toBe(user.email);
       expect(res.body[0].username).toBe(user.username);
     });
 
     it("should not send password in users object", async () => {
-      const res = await request(server).get("/api/users");
+      const res = await request(server)
+        .get("/api/users")
+        .set("x-auth-token", token);
 
       expect(res.body[0].password).toBeUndefined();
     });
@@ -42,14 +55,18 @@ describe("/api/users", () => {
 
   describe("GET /:id", () => {
     it("should return specific user by id", async () => {
-      const res = await request(server).get("/api/users/" + userId);
+      const res = await request(server)
+        .get("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.body.email).toBe(user.email);
       expect(res.body.username).toBe(user.username);
     });
 
     it("should not send user password in response", async () => {
-      const res = await request(server).get("/api/users/" + userId);
+      const res = await request(server)
+        .get("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.body.password).toBeUndefined();
     });
@@ -57,7 +74,9 @@ describe("/api/users", () => {
     it("should return 404 if user not found", async () => {
       userId = mongoose.Types.ObjectId();
 
-      const res = await request(server).get("/api/users/" + userId);
+      const res = await request(server)
+        .get("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
       expect(res.text).toContain("not found");
@@ -66,7 +85,9 @@ describe("/api/users", () => {
     it("should return 400 if given id is invalid", async () => {
       userId = "invalid Id";
 
-      const res = await request(server).get("/api/users/" + userId);
+      const res = await request(server)
+        .get("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
       expect(res.text).toContain("invalid");
@@ -135,6 +156,7 @@ describe("/api/users", () => {
 
       const res = await request(server)
         .put("/api/users/" + userId)
+        .set("x-auth-token", token)
         .send(user);
 
       expect(res.status).toBe(404);
@@ -147,6 +169,7 @@ describe("/api/users", () => {
 
       const res = await request(server)
         .put("/api/users/" + userId)
+        .set("x-auth-token", token)
         .send(user);
 
       expect(res.status).toBe(400);
@@ -158,6 +181,7 @@ describe("/api/users", () => {
 
       const res = await request(server)
         .put("/api/users/" + userId)
+        .set("x-auth-token", token)
         .send(user);
 
       expect(res.body.email).toBe(user.email);
@@ -170,6 +194,7 @@ describe("/api/users", () => {
 
       const res = await request(server)
         .put("/api/users/" + userId)
+        .set("x-auth-token", token)
         .send(user);
 
       expect(res.body.password).toBeUndefined();
@@ -183,6 +208,7 @@ describe("/api/users", () => {
 
       await request(server)
         .put("/api/users/" + userId)
+        .set("x-auth-token", token)
         .send(user);
 
       const userInDb = await User.findById(userId);
@@ -202,7 +228,9 @@ describe("/api/users", () => {
     it("should return 400 status if given id is invalid", async () => {
       userId = "invalid id";
 
-      const res = await request(server).delete("/api/users/" + userId);
+      const res = await request(server)
+        .delete("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
       expect(res.text).toContain("invalid");
@@ -211,20 +239,26 @@ describe("/api/users", () => {
     it("should return 404 status if no user found", async () => {
       userId = mongoose.Types.ObjectId();
 
-      const res = await request(server).delete("/api/users/" + userId);
+      const res = await request(server)
+        .delete("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
       expect(res.text).toContain("not found");
     });
 
     it("should return deleted user in response", async () => {
-      const res = await request(server).delete("/api/users/" + userId);
+      const res = await request(server)
+        .delete("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       expect(res.body._id).toBe(userId.toHexString());
     });
 
     it("should delete the user from data base", async () => {
-      await request(server).delete("/api/users/" + userId);
+      await request(server)
+        .delete("/api/users/" + userId)
+        .set("x-auth-token", token);
 
       const userInDb = await User.findById(userId);
 
@@ -232,9 +266,13 @@ describe("/api/users", () => {
     });
   });
 
-  // describe("GET /me", ()=>{
-  //   it("should return current user information if token is provided", async()=>{
+  describe("GET /me", () => {
+    it("should return current user information if token is provided", async () => {
+      const res = await request(server)
+        .get("/api/users/me")
+        .set("x-auth-token", token);
 
-  //   })
-  // })
+      expect(res.body._id).toBe(userA._id.toHexString());
+    });
+  });
 });

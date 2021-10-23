@@ -1,16 +1,15 @@
-let server;
 const request = require("supertest");
 const mongoose = require("mongoose");
 const { Coach } = require("../../../models/coach");
+const { User } = require("../../../models/user");
 
 describe("/api/coachs", () => {
-  let coachId;
-  let coach;
+  let server, coach, coachId, token;
 
   beforeEach(async () => {
     coachId = mongoose.Types.ObjectId();
     server = require("../../../index");
-    coach = new Coach({
+    coach = await Coach.create({
       _id: coachId,
       name: "coachName",
       lname: "coachLname",
@@ -19,17 +18,28 @@ describe("/api/coachs", () => {
         "https://i.guim.co.uk/img/media/939511832ce304130da85e4210638add046a5c04/0_219_4938_2963/master/4938.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=c1f390057cf2b8f6741f8bfa86798b92",
       team: { name: "teamName" },
     });
-    await coach.save();
+
+    const userB = await User.create({
+      email: "userB@gmail.com",
+      username: "userB",
+      password: "userB1password",
+      type: "B",
+    });
+
+    token = userB.generateJWT();
   });
 
   afterEach(async () => {
-    await Coach.remove({});
-    await server.close();
+    await Coach.deleteMany();
+    await User.deleteMany();
+    server.close();
   });
 
   describe("GET /", () => {
     it("should return all of coachs", async () => {
-      const res = await request(server).get("/api/coachs");
+      const res = await request(server)
+        .get("/api/coachs")
+        .set("x-auth-token", token);
 
       expect(res.body).not.toBeNull();
       expect(res.body[0]._id).toBe(coachId.toHexString());
@@ -40,7 +50,9 @@ describe("/api/coachs", () => {
     it("should return 404 if coach not found", async () => {
       const randomId = mongoose.Types.ObjectId();
 
-      const res = await request(server).get("/api/coachs/" + randomId);
+      const res = await request(server)
+        .get("/api/coachs/" + randomId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(404);
     });
@@ -48,13 +60,17 @@ describe("/api/coachs", () => {
     it("should return 400 if given id is invalid", async () => {
       const invalidId = "invalidId";
 
-      const res = await request(server).get("/api/coachs/" + invalidId);
+      const res = await request(server)
+        .get("/api/coachs/" + invalidId)
+        .set("x-auth-token", token);
 
       expect(res.status).toBe(400);
     });
 
     it("should return exact coach by the given id", async () => {
-      const res = await request(server).get("/api/coachs/" + coachId);
+      const res = await request(server)
+        .get("/api/coachs/" + coachId)
+        .set("x-auth-token", token);
 
       expect(res.body._id).toBe(coachId.toHexString());
     });
@@ -72,7 +88,10 @@ describe("/api/coachs", () => {
         },
       };
 
-      const res = await request(server).post("/api/coachs").send(newCoach);
+      const res = await request(server)
+        .post("/api/coachs")
+        .set("x-auth-token", token)
+        .send(newCoach);
 
       expect(res.body).toMatchObject(newCoach);
     });
@@ -88,7 +107,10 @@ describe("/api/coachs", () => {
         },
       };
 
-      await request(server).post("/api/coachs").send(newCoach);
+      await request(server)
+        .post("/api/coachs")
+        .set("x-auth-token", token)
+        .send(newCoach);
 
       const coachInDb = await Coach.findOne({ name: "newCoachName" });
 
@@ -110,6 +132,7 @@ describe("/api/coachs", () => {
     function exec() {
       return request(server)
         .put("/api/coachs/" + coachId)
+        .set("x-auth-token", token)
         .send(updatedCoach);
     }
 
@@ -140,7 +163,9 @@ describe("/api/coachs", () => {
 
   describe("DELETE /:id", () => {
     function exec() {
-      return request(server).delete("/api/coachs/" + coachId);
+      return request(server)
+        .delete("/api/coachs/" + coachId)
+        .set("x-auth-token", token);
     }
 
     it("should return 400 if given id is invalid ObjectId", async () => {
