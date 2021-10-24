@@ -42,8 +42,9 @@ userSchema.statics.alreadyExists = function (body) {
 };
 
 userSchema.statics.extractByToken = async function (token) {
+  let decoded;
   try {
-    const decoded = await jwt.verify(token, config.get("jwtPrivateKey"));
+    decoded = await jwt.verify(token, config.get("jwtPrivateKey"));
   } catch (ex) {
     return false;
   }

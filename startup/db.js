@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 const config = require("config");
-const debug = require("debug")("db");
 
-mongoose.connect(config.get("db")).catch((ex) => {
-  console.log(ex);
+mongoose.connect(config.get("db")).then(() => {
+  logger.info("CONNECTED TO MONGODB");
 });
-
-debug("connected to db successfully");

@@ -7,7 +7,7 @@ const permission = require("../middlewares/permission");
 const router = Router();
 
 router.get("/", permission("B"), async (req, res) => {
-  const leagues = await League.find({});
+  const leagues = await League.find();
 
   res.send(leagues);
 });
