@@ -7,8 +7,7 @@ const config = require("config");
 require("./handleErrors");
 
 if (!config.get("jwtPrivateKey")) {
-  console.error("jwt private key is not provided");
-  process.exit(1);
+  throw new Error("FATAL ERROR: jwt private key is not provided");
 }
 module.exports = function (app) {
   app.set("views", "views");
@@ -18,5 +17,6 @@ module.exports = function (app) {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.static("/public"));
 
+  require("./prod")(app);
   app.use(indexRouter);
 };

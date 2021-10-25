@@ -1,8 +1,8 @@
 const express = require("express");
+const logger = require("./utils/logger");
 require("./startup/db");
 const config = require("config");
 const app = express();
-const debug = require("debug")("startup");
 
 require("./startup/setting")(app);
 
@@ -11,7 +11,7 @@ app.get("/", (req, res) => {
 });
 
 const server = app.listen(config.get("port"), () => {
-  debug(`listen to port ${config.get("port")}`);
+  logger.info(`listen to port ${config.get("port")}`);
 });
 
 module.exports = server;

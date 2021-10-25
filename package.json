@@ -4,7 +4,12 @@
   "description": "an web service for football teams and players database",
   "main": "index.js",
   "scripts": {
-    "test": "jest --verbose  --maxWorkers=1 --collect-coverage"
+    "test": "jest --verbose  --maxWorkers=1",
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": "14.18.0",
+    "npm": "6.14.15"
   },
   "author": "",
   "license": "ISC",
