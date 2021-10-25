@@ -13,6 +13,6 @@ module.exports = winston.createLogger({
       colorize: true,
       prettyPrint: true,
     }),
-    // new winston.transports.MongoDB({ db: config.get("db"), level: "error" }),
+    new winston.transports.MongoDB({ db: config.get("db"), level: "error" }),
   ],
 });
